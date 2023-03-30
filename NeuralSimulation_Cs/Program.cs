@@ -4,19 +4,26 @@ using System.Runtime.CompilerServices;
 
 public class Main_class {
 
-    static double dt = 0.25;
+    static double dt = 1;
     const double x0 = 1.0;
 
     class Neuron {
-        private const double kTau = 0;
+        private const double kTau = 20.0;
         private const double kTau_inv = 1.0 / kTau;
-        private const double kPotential_rest = 0;
-        private const double kR_m = 1;
-        private const double i_ext = 1;
+        private const double kPotential_rest = -65.0;
+        private const double kR_m = 1.0;
+        private const double i_ext = 12.0;
+        private const double kTheta = -55.0;
 
-        private double potential_membrane = 0;
-        public double dvdt(double potential_membrance, double t) {
+        public double potential_membrane = -65.0;
+        public double dvdt(double potential_membrane_, double t) {
+            potential_membrane = potential_membrane_;
             return (-(potential_membrane - kPotential_rest) + kR_m * i_ext) * kTau_inv;
+        }
+        public void spike() {
+            if (potential_membrane > kTheta) {
+                potential_membrane = kPotential_rest;
+            }
         }
     }
 
@@ -45,14 +52,18 @@ public class Main_class {
         double f(double x, double t) { return x; }
         Neuron os = new Neuron();
 
-        for (int i = 0; i < 10; i++) {
-            dt = dt/2.0;
+        //for (int i = 0; i < 10; i++) {
+            //dt = dt/2.0;
             double ans = x0;
-            for (double t = 0; t < 1.0; t = t + dt) {
-                ans = RungeKutta_Approximate(os.dvdt, ans, t);
+            const double v0 = -65.0;
+            os.potential_membrane = v0;
+            for (double t = 0; t < 10000; t = t + dt) {
+                os.potential_membrane += dt * os.dvdt(os.potential_membrane, t);
+                os.spike();
+                Console.WriteLine($"{t}, {os.potential_membrane}");
             }
-            Console.WriteLine($"{dt} \t| {ans}"); 
-        }
+            //Console.WriteLine($"{dt} \t| {v}"); 
+        //}
     }
     
 }
