@@ -11,19 +11,27 @@ public class Main_class {
         private const double kTau = 20.0;
         private const double kTau_inv = 1.0 / kTau;
         private const double kPotential_rest = -65.0;
+        private const double kPotential_reset = -65.0;
         private const double kR_m = 1.0;
         private const double i_ext = 12.0;
-        private const double kTheta = -55.0;
+        private const double kSpikeThreshold = -55.0;
 
-        public double potential_membrane = -65.0;
-        public double dvdt(double potential_membrane_, double t) {
-            potential_membrane = potential_membrane_;
+        // 膜電位
+        public double potential_membrane = kPotential_reset;
+
+        private double dvdt(double v_, double t) {
+            potential_membrane = v_;
             return (-(potential_membrane - kPotential_rest) + kR_m * i_ext) * kTau_inv;
         }
-        public void spike() {
-            if (potential_membrane > kTheta) {
-                potential_membrane = kPotential_rest;
-            }
+        
+        private void spike() {
+            if (potential_membrane < kSpikeThreshold) return;
+            potential_membrane = kPotential_rest;
+        }
+        
+        public void ProcessCalculation() {
+            potential_membrane = RungeKutta_Approximate(dvdt, potential_membrane, 1.0);
+            spike();
         }
     }
 
@@ -35,6 +43,11 @@ public class Main_class {
         double dx4 = dt * f(x + dx3, t + dt);
 
         return x + (dx1 + 2 * dx2 + 2 * dx3 + dx4) / 6.0;
+    }
+
+    public static double Eular_Approximate(Func<double, double, double> f, 
+                                           double x, double t) {
+        return x + dt * f(x, t);
     }
 
     /*
@@ -49,21 +62,14 @@ public class Main_class {
     }*/
 
     public static void Main() {
-        double f(double x, double t) { return x; }
         Neuron os = new Neuron();
 
-        //for (int i = 0; i < 10; i++) {
-            //dt = dt/2.0;
-            double ans = x0;
-            const double v0 = -65.0;
-            os.potential_membrane = v0;
-            for (double t = 0; t < 10000; t = t + dt) {
-                os.potential_membrane += dt * os.dvdt(os.potential_membrane, t);
-                os.spike();
-                Console.WriteLine($"{t}, {os.potential_membrane}");
-            }
-            //Console.WriteLine($"{dt} \t| {v}"); 
-        //}
+        const double v0 = -65.0;
+        os.potential_membrane = v0;
+        for (double t = 0; t < 300; t = t + dt) {
+            os.ProcessCalculation();
+            Console.WriteLine($"{t}, {os.potential_membrane}");
+        }
     }
     
 }
